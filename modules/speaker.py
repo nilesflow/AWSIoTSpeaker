@@ -4,7 +4,7 @@
 # standard modules
 import os
 from contextlib import closing
-from boto3 import Session
+import boto3
 import pygame.mixer
 
 class Speaker:
@@ -15,7 +15,7 @@ class Speaker:
 	# 出力音声ファイル名
 	file_voice = 'polly.mp3'
 
-	def __init__(self):
+	def __init__(self, config):
 		# 出力音声ファイルパス
 		path = os.path.dirname(os.path.abspath(__file__)) + '/../tmp/'
 		
@@ -23,7 +23,14 @@ class Speaker:
 		if not os.path.isdir(path):
 			os.mkdir(path)
 
-		self.path_voice = path + Speaker.file_voice;
+		self.path_voice = path + Speaker.file_voice
+
+		## AWS Client生成
+		self.client = boto3.client(
+			'polly',
+			aws_access_key_id = config['ACCESS_KEY'],
+			aws_secret_access_key = config['SECRET_KEY'],
+		)
 
 	def _play(self):
 		"""
@@ -48,16 +55,12 @@ class Speaker:
 		:param str voice: "Takumi" or "Mizuki"
 		"""
 
-		## AWS Sessionを作成
-		session = Session(profile_name = 'default')
-		polly = session.client('polly')
-
 		## ファイルが存在した場合は削除
 		if os.path.isfile(self.path_voice):
 		  os.remove (self.path_voice)
 
 		## 音声データを作成
-		response = polly.synthesize_speech(
+		response = self.client.synthesize_speech(
 			Text = text,
 			OutputFormat = 'mp3',
 			VoiceId = voice

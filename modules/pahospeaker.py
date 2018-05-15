@@ -11,7 +11,8 @@ from speaker import Speaker
 class PahoSpeaker(PahoAwsIot, object):
 
 	def __init__(self, config):
-		super(PahoSpeaker, self).__init__(config)
+		super(PahoSpeaker, self).__init__(config['Paho'])
+		self.speaker = Speaker(config['Aws'])
 
 	def _on_message(self, mosq, obj, msg):
 		"""
@@ -54,7 +55,7 @@ class PahoSpeaker(PahoAwsIot, object):
 
 			# action毎の処理
 			if action == 'speak':
-				Speaker().play(param)
+				self.speaker.play(param)
 
 			# 処理終了
 			print 'end'
