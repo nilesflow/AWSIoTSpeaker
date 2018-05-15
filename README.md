@@ -8,11 +8,11 @@ RasperrryPIにスピーカーを接続
 pip install paho-mqtt
 pip install boto3
 
+証明書を配置
+
 vi config.ini
 * AWS IoTのHost、証明書情報を入力
 * AWS Pollyへのアクセス情報を入力
-
-証明書を配置
 
 # 起動方法
 python index.py
