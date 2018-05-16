@@ -2,6 +2,9 @@
 on RaspberryPi  
 AWS IoT MQTTのpublish messageをAmazon Pollyして再生
 
+# 動作環境
+Python 2.7.12 で確認
+
 # 準備
 RasperrryPIにスピーカーを接続
 
