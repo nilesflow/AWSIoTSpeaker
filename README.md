@@ -1,11 +1,12 @@
 # AWSIoTSpeaker
-on RaspberryPi　AWS IoT MQTTのpublish messageをAmazon Pollyして再生
+on RaspberryPi  
+AWS IoT MQTTのpublish messageをAmazon Pollyして再生
 
 # 準備
 RasperrryPIにスピーカーを接続
 
 # セットアップ
-pip install paho-mqtt
+pip install paho-mqtt  
 pip install boto3
 
 証明書を配置
