@@ -1,0 +1,11 @@
+[Unit]
+Description=Aws IoT Speaker
+
+[Service]
+ExecStart=/usr/bin/env python /home/pi/aws-iot/AWSIoTSpeaker/index.py -D
+Restart=always
+Type=forking
+PIDFile=/var/run/aws-iot-speakerd.pid
+
+[Install]
+WantedBy=multi-user.target

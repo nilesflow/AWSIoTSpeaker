@@ -10,9 +10,11 @@ from speaker import Speaker
 
 class PahoSpeaker(PahoAwsIot, object):
 
-	def __init__(self, config):
-		super(PahoSpeaker, self).__init__(config['Paho'])
-		self.speaker = Speaker(config['Aws'])
+	def __init__(self, config, param):
+		super(PahoSpeaker, self).__init__(config['Paho'], param)
+		self.speaker = Speaker(config['Aws'], param)
+
+		self.logging = param['logging']
 
 	def _on_message(self, mosq, obj, msg):
 		"""
@@ -31,9 +33,9 @@ class PahoSpeaker(PahoAwsIot, object):
 			:str voice: "Takumi" or "Mizuki"
 		"""
 		try:
-			print "Topic: " + str(msg.topic)
-			print "QoS: " + str(msg.qos)
-			print "Payload: " + str(msg.payload)
+			self.logging.info("Topic: " + str(msg.topic))
+			self.logging.info("QoS: " + str(msg.qos))
+			self.logging.info("Payload: " + str(msg.payload))
 
 			# topic 確認
 			topics_pub = msg.topic.split('/', 2)
@@ -58,10 +60,10 @@ class PahoSpeaker(PahoAwsIot, object):
 				self.speaker.play(param)
 
 			# 処理終了
-			print 'end'
+			self.logging.info('end')
 
 		except Exception as e:
-			print e
+			self.logging.error(e)
 
 	def run(self):
 		self._loop_forever()

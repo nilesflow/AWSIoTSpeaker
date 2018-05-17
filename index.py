@@ -2,21 +2,38 @@
 # -*- coding: utf-8 -*-
 
 # standard modules
-import sys,os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/modules')
+import sys, os
+
+# 実行ディレクトリ＆モジュールパス設定
+dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(dir)
+sys.path.append(dir + '/modules')
 
 # user modules
-import ConfigParser
-from pahospeaker import PahoSpeaker
+from awsiotspeaker import AwsIoTSpeaker
 
-parser = ConfigParser.ConfigParser()
-parser.optionxform = str # 大文字小文字の区別
-parser.read('config.ini')
+def run(is_daemon = False):
+	param = {
+		'is_daemon' : is_daemon
+	}
+	AwsIoTSpeaker('config.ini', param).run()
 
-# 全て文字列型で読み込まれる
-config = {}
-config['Paho'] = dict(parser.items('Paho'))
-config['Aws'] = dict(parser.items('Aws'))
+def daemonize():
+	pid = os.fork()
+	if pid > 0:
+		f = open('/var/run/aws-iot-speakerd.pid', 'w')
+		f.write(str(pid) + "\n")
+		f.close()
+		sys.exit()
 
-# メッセージ受信＆再生
-PahoSpeaker(config).run()
+	elif pid == 0:
+		run(True)
+
+if __name__== '__main__':
+	# コマンドライン引数を判定
+	if '-D' in sys.argv:
+		# デーモン起動
+		daemonize()
+	else:
+		# 通常起動
+		run(False)

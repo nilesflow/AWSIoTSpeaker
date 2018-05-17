@@ -12,7 +12,7 @@ import json
 
 class PahoAwsIot:
 
-	def __init__(self, config):
+	def __init__(self, config, param):
 		self.topic = config['MQTT_TOPIC']
 
 		# Initiate MQTT Client
@@ -41,6 +41,7 @@ class PahoAwsIot:
 		)
 
 		self.mqttc = mqttc
+		self.logging = param['logging']
 
 	def _on_connect(self, client, userdata, flags, rc):
 		"""
@@ -55,12 +56,10 @@ class PahoAwsIot:
 		This function will be invoked every time,
 		a new message arrives for the subscribed topic 
 		"""
-		print "Topic: " + str(msg.topic)
-		print "QoS: " + str(msg.qos)
-		print "Payload: " + str(msg.payload)
+		pass
 
 	def _on_subscribe(self, mosq, obj, mid, granted_qos):
-		print("Subscribed to Topic with QoS: " + str(granted_qos))
+		self.logging.info("Subscribed to Topic with QoS: " + str(granted_qos))
 
 	def _loop_forever(self):
 		# Continue monitoring the incoming messages for subscribed topic

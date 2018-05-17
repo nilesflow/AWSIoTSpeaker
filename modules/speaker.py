@@ -15,7 +15,7 @@ class Speaker:
 	# 出力音声ファイル名
 	file_voice = 'polly.mp3'
 
-	def __init__(self, config):
+	def __init__(self, config, param):
 		# 出力音声ファイルパス
 		path = os.path.dirname(os.path.abspath(__file__)) + '/../tmp/'
 		
@@ -28,9 +28,12 @@ class Speaker:
 		## AWS Client生成
 		self.client = boto3.client(
 			'polly',
+			region_name='ap-northeast-1',
 			aws_access_key_id = config['ACCESS_KEY'],
 			aws_secret_access_key = config['SECRET_KEY'],
 		)
+
+		self.logging = param['logging']
 
 	def _play(self):
 		"""
@@ -78,19 +81,19 @@ class Speaker:
 		"""
 		音声ファイル生成＆再生
 		"""
-		print param
+		self.logging.info(param)
 
 		## 再生するテキスト
 		if 'text' not in param:
 			raise Exception('textが指定されていません')
 		text = param['text'].encode('utf-8')
-		print text
+		self.logging.info(text)
 
 		## 男女を切り替え
 		voice = "Takumi"
 		if 'voice' in param:
 			voice = param['voice']
-		print voice
+		self.logging.info(voice)
 
 		# 生成＆再生
 		self._create(text, voice)
