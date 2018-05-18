@@ -5,7 +5,11 @@
 import os
 from contextlib import closing
 import boto3
-import pygame.mixer
+
+try:
+	import pygamea.mixer
+except ImportError:
+	pass
 
 class Speaker:
 	"""
@@ -39,6 +43,10 @@ class Speaker:
 		"""
 		音声ファイル再生
 		"""
+
+		# モジュール読み込みチェック（EC2等はデフォルト無し）
+		if not pygame.mixer :
+			return
 
 		# mixerモジュールの初期化
 		pygame.mixer.init()
