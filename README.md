@@ -57,5 +57,5 @@ sudo systemctl enable aws-iot-speakerd
 ```
 
 # トラブルシューティング
-音が鳴らない場合は、出力をヘッドホン固定に。
+音が鳴らない場合は、出力をヘッドホン固定に。  
 ```amixer cset numid=3 1```
