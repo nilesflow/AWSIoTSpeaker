@@ -6,8 +6,9 @@ import os
 from contextlib import closing
 import boto3
 
+# クラウドサーバ等の存在しないケース
 try:
-	import pygamea.mixer
+	import pygame.mixer
 except ImportError:
 	pass
 
@@ -19,7 +20,9 @@ class Speaker:
 	# 出力音声ファイル名
 	file_voice = 'polly.mp3'
 
-	def __init__(self, config, param):
+	def __init__(self, **kargs):
+		self.logger = kargs['logging'].getLogger(__name__)
+
 		# 出力音声ファイルパス
 		path = os.path.dirname(os.path.abspath(__file__)) + '/../tmp/'
 		
@@ -32,12 +35,10 @@ class Speaker:
 		## AWS Client生成
 		self.client = boto3.client(
 			'polly',
-			region_name='ap-northeast-1',
-			aws_access_key_id = config['ACCESS_KEY'],
-			aws_secret_access_key = config['SECRET_KEY'],
+			region_name = 'ap-northeast-1',
+			aws_access_key_id = kargs['key'],
+			aws_secret_access_key = kargs['secret'],
 		)
-
-		self.logging = param['logging']
 
 	def _play(self):
 		"""
@@ -89,19 +90,19 @@ class Speaker:
 		"""
 		音声ファイル生成＆再生
 		"""
-		self.logging.info(param)
+		self.logger.info(param)
 
 		## 再生するテキスト
 		if 'text' not in param:
 			raise Exception('textが指定されていません')
 		text = param['text'].encode('utf-8')
-		self.logging.info(text)
+		self.logger.info(text)
 
 		## 男女を切り替え
 		voice = "Takumi"
 		if 'voice' in param:
 			voice = param['voice']
-		self.logging.info(voice)
+		self.logger.info(voice)
 
 		# 生成＆再生
 		self._create(text, voice)

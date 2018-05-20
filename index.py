@@ -8,15 +8,17 @@ import sys, os
 dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(dir)
 sys.path.append(dir + '/modules')
+sys.path.append(dir + '/user_packages')
 
 # user modules
+from pyfw import util
 from awsiotspeaker import AwsIoTSpeaker
 
 def run(is_daemon = False):
-	param = {
-		'is_daemon' : is_daemon
-	}
-	AwsIoTSpeaker('config.ini', param).run()
+	AwsIoTSpeaker(
+		file_config = 'config.ini',
+		is_daemon = is_daemon
+	).run()
 
 def daemonize():
 	pid = os.fork()
@@ -30,10 +32,15 @@ def daemonize():
 		run(True)
 
 if __name__== '__main__':
-	# コマンドライン引数を判定
-	if '-D' in sys.argv:
-		# デーモン起動
-		daemonize()
-	else:
-		# 通常起動
-		run(False)
+	try:
+		# コマンドライン引数を判定
+		if '-D' in sys.argv:
+			# デーモン起動
+			daemonize()
+		else:
+			# 通常起動
+			run(False)
+
+	except Exception as e:
+		print(e)
+		print(util.trace())

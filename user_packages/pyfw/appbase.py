@@ -6,7 +6,7 @@ import os
 import logging
 import ConfigParser
 
-class Base:
+class AppBase:
 	"""
 	基底クラス
 	コンフィグ読み込み等の基本処理
@@ -43,10 +43,10 @@ class Base:
 		)
 		self.logging = logging
 
-	def __init__(self, file_config, param):
+	def __init__(self, **kargs):
 		# コンフィグ読み込み
-		self.config = self.__init_config(file_config)
-		self.is_daemon = param['is_daemon']
+		self.config = self.__init_config(kargs['file_config'])
+		self.is_daemon = kargs['is_daemon']
 
 		# ロギング設定
 		self.__init_logging(self.config['Logging'])

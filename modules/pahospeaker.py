@@ -5,25 +5,37 @@
 import json
 
 # user modules
-from pahoawsiot import PahoAwsIot
+from pyfw import util
+from pyfw.pahoawsiot import PahoAwsIot
+from pyfw.error.error import Error, ParamError
+
 from speaker import Speaker
 
 class PahoSpeaker(PahoAwsIot, object):
 
-	def __init__(self, config, param):
-		super(PahoSpeaker, self).__init__(config['Paho'], param)
-		self.speaker = Speaker(config['Aws'], param)
+	def __init__(self, config, **kargs):
+		super(PahoSpeaker, self).__init__(
+			topic_sub = config['Paho']['MQTT_TOPIC_SUB'],
+			ca = config['Paho']['CA_ROOT_CERT_FILE'],
+			cert = config['Paho']['THING_CERT_FILE'],
+			key = config['Paho']['THING_PRIVATE_KEY'],
+			host = config['Paho']['MQTT_HOST'],
+			port = config['Paho']['MQTT_PORT'],
+			keepalive = config['Paho']['MQTT_KEEPALIVE_INTERVAL'],
+			logging = kargs['logging']
+		)
+		self.speaker = Speaker(
+			key = config['Aws']['ACCESS_KEY'],
+			secret = config['Aws']['SECRET_KEY'],
+			logging = kargs['logging']
+		)
 
-		self.logging = param['logging']
+		self.topic_pub = config['Paho']['MQTT_TOPIC_PUB']
 
 	def _on_message(self, mosq, obj, msg):
 		"""
-		Define on_message event function. 
-		This function will be invoked every time,
-		a new message arrives for the subscribed topic 
-
 		:param dict msg: dictionary converted from json
-		 str  topic : raspberrypi/{action}
+		 str  topic : raspberrypi/request/{action}
 		 int  qos :
 		 json payload : {"param1": "...", "param2": "..."}
 
@@ -33,37 +45,68 @@ class PahoSpeaker(PahoAwsIot, object):
 			:str voice: "Takumi" or "Mizuki"
 		"""
 		try:
-			self.logging.info("Topic: " + str(msg.topic))
-			self.logging.info("QoS: " + str(msg.qos))
-			self.logging.info("Payload: " + str(msg.payload))
+			self.logger.info("Topic: " + str(msg.topic))
+			self.logger.info("QoS: " + str(msg.qos))
+			self.logger.info("Payload: " + str(msg.payload))
+
+			ack = {}
 
 			# topic 確認
-			topics_pub = msg.topic.split('/', 2)
-			topics_sub = self.topic.split('/')
-			if topics_pub[0] != topics_sub[0]:
-				raise Exception("invalid topic.")
+			# Level1:既定文字列のチェック
+			levels_pub = msg.topic.split('/', 2)
+			levels_sub = self.topic_sub.split('/')
+			if levels_pub[0] != levels_sub[0]:
+				raise ParamError("invalid topic.")
 
-			if len(topics_pub) < 2 :
-				raise Exception("can't find action.")
-			action = topics_pub[1]
+			# Level2：typeのチェック
+			if levels_pub[1] != levels_sub[1]:
+				raise ParamError("invalid type.")
 
+			# Level3：actionのチェックと取得
+			if len(levels_pub) < 3 :
+				raise ParamError("can't find action.")
+			action = levels_pub[2]
+
+			# レスポンス
+			ack['action'] = action
+
+			"""
 			# 一応下位を取得している
 			subtopics = None
 			if len(topics_pub) > 2 :
 				subtopics = topics_pub[2].split('/')
+			"""
 
 			# パラメータをjsonデコード
 			param = json.loads(msg.payload)
 
+			# リクエストIDをチェック、ACKに設定
+			if not param['request_id']:
+				raise ParamError("can't find request_id.")
+			ack['request_id'] = param['request_id']
+
 			# action毎の処理
 			if action == 'speak':
 				self.speaker.play(param)
+				ack['result'] = '指定されたテキストを読み上げました。'
 
 			# 処理終了
-			self.logging.info('end')
+			self.logger.info('success')
+
+		except Error as e:
+			self.logger.error(e.description)
+			ack['error'] = e.error
+			ack['error_description'] = e.description
 
 		except Exception as e:
-			self.logging.error(e)
+			self.logger.critical(e)
+			self.logger.critical(util.trace())
 
-	def run(self):
-		self._loop_forever()
+			ack['error'] = 'internal_error'
+			ack['error_description'] = str(e)
+
+		# ACK返却
+		json_ack = json.dumps(ack)
+		self.mqttc.publish(self.topic_pub, json_ack)
+		self.logger.info(self.topic_pub)
+		self.logger.info(json_ack)
