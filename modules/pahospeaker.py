@@ -3,9 +3,10 @@
 
 # standard modules
 import json
+import uuid
 
 # user modules
-from pyfw import util
+from pyfw.libs import util
 from pyfw.pahoawsiot import PahoAwsIot
 from pyfw.error.error import Error, ParamError
 
@@ -90,11 +91,16 @@ class PahoSpeaker(PahoAwsIot, object):
 			if action == 'speak':
 				self.speaker.play(param)
 				ack['result'] = '指定されたテキストを読み上げました。'
-			else :
-				ack['result'] = '対応するactionが見つかりませんでした。'
+			else:
+				raise ParamError("can't find action.")
 
 			# 処理終了
 			self.logger.info('success')
+
+		except ParamError as e:
+			# 他のメッセージを処理しない
+			self.logger.info(e.description)
+			return
 
 		except Error as e:
 			self.logger.error(e.description)
@@ -109,10 +115,8 @@ class PahoSpeaker(PahoAwsIot, object):
 			ack['error_description'] = str(e)
 
 		# ACK返却
-		json_ack = json.dumps(ack)
-		self.mqttc.publish(self.topic_pub, json_ack)
-		self.logger.info(self.topic_pub)
-		self.logger.info(json_ack)
+		self.publish(self.topic_pub, **ack)
+		self.logger.info('on message complete.')
 
 	def _on_speak(self):
 		"""
@@ -121,6 +125,9 @@ class PahoSpeaker(PahoAwsIot, object):
 		"""
 
 		# 録音を起動
-		self.mqttc.publish('raspberrypi/request/listen', json.dumps({'request_id' : 1}))
+		self.publish(
+			'raspberrypi/request/listen',
+			request_id = str(uuid.uuid4()),
+		)
 		self.logger.info('publish: raspberrypi/request/listen')
 

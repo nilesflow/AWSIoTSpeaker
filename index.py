@@ -8,10 +8,10 @@ import sys, os
 dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(dir)
 sys.path.append(dir + '/modules')
-sys.path.append(dir + '/user_packages')
+sys.path.append(dir + '/user-packages')
 
 # user modules
-from pyfw import util
+from pyfw.libs import util
 from awsiotspeaker import AwsIoTSpeaker
 
 def run(is_daemon = False):
