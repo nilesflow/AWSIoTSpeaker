@@ -2,7 +2,7 @@
 Description=Aws IoT Speaker
 
 [Service]
-ExecStart=/usr/bin/env python /path/to/AWSIoTSpeaker/index.py -D
+ExecStart=/usr/bin/env python /path/to/AwsIoTSpeaker/index.py -D
 Restart=always
 Type=forking
 PIDFile=/var/run/aws-iot-speakerd.pid
