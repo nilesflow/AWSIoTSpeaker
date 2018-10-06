@@ -1,4 +1,4 @@
-# AWSIoTSpeaker
+# AwsIoTSpeaker
 on RaspberryPi  
 AWS IoT MQTTのpublish messageをAmazon Pollyして再生
 
@@ -47,7 +47,7 @@ python index.py -D
 ```
 vi aws-iot-speakerd.service
 # 下記パスを修正
-ExecStart=/usr/bin/env python /path/to/AWSIoTSpeaker/index.py -D
+ExecStart=/usr/bin/env python /path/to/AwsIoTSpeaker/index.py -D
 ```
 ```
 sudo cp aws-iot-speakerd.service /usr/lib/systemd/system/
