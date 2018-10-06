@@ -3,11 +3,14 @@
 
 # standard modules
 import os
+import time
+import threading
 from contextlib import closing
 import boto3
 
 # クラウドサーバ等の存在しないケース
 try:
+	import pygame
 	import pygame.mixer
 except ImportError:
 	pass
@@ -19,6 +22,9 @@ class Speaker:
 
 	# 出力音声ファイル名
 	file_voice = 'polly.mp3'
+
+	# 終了イベント
+	EVENT_PLAYEND = pygame.USEREVENT + 1
 
 	def __init__(self, **kargs):
 		self.logger = kargs['logging'].getLogger(__name__)
@@ -40,23 +46,58 @@ class Speaker:
 			aws_secret_access_key = kargs['secret'],
 		)
 
+		# コールバック関数登録
+		self.on_speak = kargs['on_speak']
+
+	def threadWaitPlay(self):
+		"""
+		再生待ち処理
+		"""
+
+		# "error: video system not initialized" 対策
+		# https://www.raspberrypi.org/forums/viewtopic.php?t=46096
+		os.environ["SDL_VIDEODRIVER"] = "dummy"
+		pygame.init()
+
+		self.logger.info("PLAY START WAIT")
+
+		# 再生終了待ち
+		loop = True
+		while loop:
+			for event in pygame.event.get():
+				if event.type == self.EVENT_PLAYEND:
+					loop = False
+					break
+				time.sleep(0.1)
+		self.logger.info("PLAY END")
+
+		# 再生終了をコールバック
+		self.on_speak()
+
 	def _play(self):
 		"""
 		音声ファイル再生
 		"""
 
 		# モジュール読み込みチェック（EC2等はデフォルト無し）
-		if not pygame.mixer :
+		if not pygame.mixer:
 			return
 
 		# mixerモジュールの初期化
 		pygame.mixer.init()
 
+		# 終了イベントを登録
+		pygame.mixer.music.set_endevent(self.EVENT_PLAYEND)
+
 		# 音声再生ファイルの読み込み
 		pygame.mixer.music.load(self.path_voice)
 
-		# 音声再生、および再生回数の設定(-1はループ再生)
-		pygame.mixer.music.play(1)
+		# 再生待ち処理を非デーモン（終了待ちスレッド）として起動
+		thread = threading.Thread(target = self.threadWaitPlay)
+		thread.start()
+
+		# 音声再生
+		pygame.mixer.music.play()
 
 	def _create(self, text, voice):
 		"""
@@ -69,7 +110,7 @@ class Speaker:
 
 		## ファイルが存在した場合は削除
 		if os.path.isfile(self.path_voice):
-		  os.remove (self.path_voice)
+			os.remove (self.path_voice)
 
 		## 音声データを作成
 		response = self.client.synthesize_speech(

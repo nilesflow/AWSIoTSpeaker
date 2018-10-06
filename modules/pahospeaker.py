@@ -27,7 +27,8 @@ class PahoSpeaker(PahoAwsIot, object):
 		self.speaker = Speaker(
 			key = config['Aws']['ACCESS_KEY'],
 			secret = config['Aws']['SECRET_KEY'],
-			logging = kargs['logging']
+			logging = kargs['logging'],
+			on_speak = self._on_speak
 		)
 
 		self.topic_pub = config['Paho']['MQTT_TOPIC_PUB']
@@ -89,6 +90,8 @@ class PahoSpeaker(PahoAwsIot, object):
 			if action == 'speak':
 				self.speaker.play(param)
 				ack['result'] = '指定されたテキストを読み上げました。'
+			else :
+				ack['result'] = '対応するactionが見つかりませんでした。'
 
 			# 処理終了
 			self.logger.info('success')
@@ -110,3 +113,14 @@ class PahoSpeaker(PahoAwsIot, object):
 		self.mqttc.publish(self.topic_pub, json_ack)
 		self.logger.info(self.topic_pub)
 		self.logger.info(json_ack)
+
+	def _on_speak(self):
+		"""
+		音声再生のコールバック
+		再生終了を処理
+		"""
+
+		# 録音を起動
+		self.mqttc.publish('raspberrypi/request/listen', json.dumps({'request_id' : 1}))
+		self.logger.info('publish: raspberrypi/request/listen')
+
